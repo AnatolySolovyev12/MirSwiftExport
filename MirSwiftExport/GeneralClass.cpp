@@ -3,7 +3,20 @@
 GeneralClass::GeneralClass(QObject *parent)
 	: QObject(parent)
 {
-	connectToDb();
+	if(connectToDb())
+	{
+		getAllDevice();
+		getAllValueForEnergy();
+
+		for (int counter = 0; counter < idMiddleSerialFinal.length(); counter++)
+		{
+			qDebug() << "Final cmd exit";
+			qDebug() << idMiddleSerialFinal[counter].first << "   " << idMiddleSerialFinal[counter].second << "   " << finalArrIdAndValueFinal[counter].first 
+				<< "   " << finalArrIdAndValueFinal[counter].second.first << "   " << finalArrIdAndValueFinal[counter].second.second
+				<< "   " << finalArrIdAndValueFinal[1+ counter*2].second.first << "   " << finalArrIdAndValueFinal[1+counter*2].second.second;
+		}
+
+	}
 
 
 }
@@ -14,21 +27,21 @@ GeneralClass::~GeneralClass()
 
 
 
-void GeneralClass::connectToDb()
+bool GeneralClass::connectToDb()
 {
 	QFile tempForCheckDb;
-	tempForCheckDb.setFileName("TEST_копия1.db"); // рихтануть метод в плане указания базы
+	tempForCheckDb.setFileName("C://Users//admin//source//repos//TEST_копия1.db"); // рихтануть метод в плане указания базы
 
 	if (!tempForCheckDb.exists())
 	{
 		qDebug() << "NOT found your dataBase";
-		return;
+		return false;
 	}
 
 
 
 	mainConnection = QSqlDatabase::addDatabase("QSQLITE", "mirSwiftDb");
-	mainConnection.setDatabaseName("TEST_копия1.db");
+	mainConnection.setDatabaseName("C://Users//admin//source//repos//TEST_копия1.db");
 
 	if (!mainConnection.open())
 	{
@@ -39,16 +52,13 @@ void GeneralClass::connectToDb()
 		else
 			qDebug() << "NOT OPEN nameDb";
 
-		return;
+		return false;
 	}
 	else
 	{
 		qDebug() << "Db is open";
 
-
-		getAllDevice();
-
-		getAllValueForEnergy();
+		return true;
 	}
 }
 
@@ -78,7 +88,7 @@ void GeneralClass::getAllDevice()
 	{
 		// Делаем первичную проверку на предмет того что это та запись с серийником которая нам требуется
 
-		std::cout << "First serial in func: " << queryMain.value(0).toString().toStdString() << "   " << queryMain.value(1).toString().toStdString() << std::endl;
+		//std::cout << "First serial in func: " << queryMain.value(0).toString().toStdString() << "   " << queryMain.value(1).toString().toStdString() << std::endl;
 
 		QString queryCheckString = QString("select * from objects where object_id = %1").arg(queryMain.value(0).toString());
 
@@ -97,7 +107,7 @@ void GeneralClass::getAllDevice()
 		}
 		else
 		{
-			std::cout << "First check in func: " << queryCheck.value(0).toString().toStdString() << "   " << queryCheck.value(1).toString().toStdString() << "   " << queryCheck.value(2).toString().toStdString() << std::endl;
+			//std::cout << "First check in func: " << queryCheck.value(0).toString().toStdString() << "   " << queryCheck.value(1).toString().toStdString() << "   " << queryCheck.value(2).toString().toStdString() << std::endl;
 
 			if (queryCheck.value(2).toString() == "Параметры устройства")
 			{
@@ -110,7 +120,7 @@ void GeneralClass::getAllDevice()
 
 		while(queryMain.next())
 		{
-			std::cout << "Next serial in func: " << queryMain.value(0).toString().toStdString() << "   " << queryMain.value(1).toString().toStdString() << std::endl;
+			//std::cout << "Next serial in func: " << queryMain.value(0).toString().toStdString() << "   " << queryMain.value(1).toString().toStdString() << std::endl;
 
 			QString queryCheckString = QString("select * from objects where object_id = %1").arg(queryMain.value(0).toString());
 
@@ -127,8 +137,7 @@ void GeneralClass::getAllDevice()
 			}
 			else
 			{
-				std::cout << "Next check in func: " << queryCheck.value(0).toString().toStdString() << "   " << queryCheck.value(1).toString().toStdString() << "   " << queryCheck.value(2).toString().toStdString() << std::endl;
-
+				//std::cout << "Next check in func: " << queryCheck.value(0).toString().toStdString() << "   " << queryCheck.value(1).toString().toStdString() << "   " << queryCheck.value(2).toString().toStdString() << std::endl;
 
 				if (queryCheck.value(2).toString() == "Параметры устройства")
 				{
@@ -142,19 +151,19 @@ void GeneralClass::getAllDevice()
 
 
 	// выводим чистый массив с кем работать
-	qDebug() << "Full serial array...";
+	/*qDebug() << "Full serial array...";
 
 	for (auto& val : idSerialList)
 	{
 		qDebug() << val.first << "   " << val.second;
 	}
-
-	getMiddleId(idSerialList);
+	*/
+	idMiddleSerialFinal = getMiddleId(idSerialList);
 }
 
 
 
-void GeneralClass::getMiddleId(QList<QPair<QString, QString>>tempArr)
+QList<QPair<QString, QString>> GeneralClass::getMiddleId(QList<QPair<QString, QString>>tempArr)
 {
 	QSqlQuery queryMain(mainConnection);
 	QList<QPair<QString, QString>>idMiddleSerial;
@@ -173,7 +182,7 @@ void GeneralClass::getMiddleId(QList<QPair<QString, QString>>tempArr)
 			else
 				qDebug() << "NOT doing get middle id";
 
-			return;
+			break;
 		}
 		else
 		{
@@ -188,24 +197,25 @@ void GeneralClass::getMiddleId(QList<QPair<QString, QString>>tempArr)
 				else
 					qDebug() << "NOT doing get next middle id";
 
-				return;
+				break;
 			}
 			else
 			{
-				idMiddleSerial.push_back(qMakePair(queryMain.value(1).toString(), queryMain.value(2).toString()));
+				idMiddleSerial.push_back(qMakePair(queryMain.value(1).toString(), val.second));
 			}
 
 		}
 	}
 
 	// выводим чистый массив с кем работать
-	qDebug() << "Full id serial array...";
+	/*qDebug() << "Full id serial array...";
 
 	for (auto& val : idMiddleSerial)
 	{
 		qDebug() << val.first << "   " << val.second;
-	}
+	}*/
 
+	return idMiddleSerial;
 }
 
 
@@ -277,22 +287,21 @@ void GeneralClass::getAllValueForEnergy()
 	
 
 	// выводим чистый массив с кем работать
-	qDebug() << "Full value And Id  array...";
+	/*qDebug() << "Full value And Id  array...";
 
 	for (auto& val : idAndEnergy)
 	{
 		qDebug() << val.first << "   " << val.second;
 	}
+	*/
 
 
-
-     getIdFromIdValues(idAndEnergy);
-
+	finalArrIdAndValueFinal = getIdFromIdValues(idAndEnergy);
 }
 
 
 
-void GeneralClass::getIdFromIdValues(QList<QPair<QString, QString>>tempArr)
+QList<QPair<QString, QPair<QString, QString>>> GeneralClass::getIdFromIdValues(QList<QPair<QString, QString>>tempArr)
 {
 	QSqlQuery queryMain(mainConnection);
 
@@ -312,11 +321,13 @@ void GeneralClass::getIdFromIdValues(QList<QPair<QString, QString>>tempArr)
 			else
 				qDebug() << "NOT doing get middle id";
 
-			return;
+			break;
 		}
 		else
 		{
 			queryString = QString("SELECT link_id, object_from_id, object_to_id FROM links where object_to_id = %1").arg(queryMain.value(1).toString());
+
+			QString tempId = queryMain.value(2).toString();
 
 			if (!queryMain.exec(queryString) || !queryMain.next())
 			{
@@ -327,23 +338,23 @@ void GeneralClass::getIdFromIdValues(QList<QPair<QString, QString>>tempArr)
 				else
 					qDebug() << "NOT doing get next middle id";
 
-				return;
+				break;
 			}
 			else
 			{
-				finalArrIdAndValue.push_back(qMakePair("123", qMakePair(queryMain.value(1).toString(), queryMain.value(2).toString())));
+				finalArrIdAndValue.push_back(qMakePair(queryMain.value(1).toString(), qMakePair(val.first, val.second)));
 			}
 
 		}
 	}
 
 	// выводим чистый массив с кем работать
-	qDebug() << "Full id serial array...";
+	/*qDebug() << "Full idId array...";
 
 	for (auto& val : finalArrIdAndValue)
 	{
 		qDebug() << val.first << "   " << val.second;
 	}
-
-
+	*/
+	return finalArrIdAndValue;
 }

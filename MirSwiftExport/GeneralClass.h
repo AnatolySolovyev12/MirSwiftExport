@@ -21,17 +21,19 @@ public:
 	GeneralClass(QObject *parent = nullptr);
 	~GeneralClass();
 
-	void connectToDb();
+	bool connectToDb();
 	void getAllDevice();
-	void getMiddleId(QList<QPair<QString, QString>>tempArr);
+	QList<QPair<QString, QString>> getMiddleId(QList<QPair<QString, QString>>tempArr);
 
 	void getAllValueForEnergy();
 
-	void getIdFromIdValues(QList<QPair<QString, QString>>tempArr);
+	QList<QPair<QString, QPair<QString, QString>>> getIdFromIdValues(QList<QPair<QString, QString>>tempArr);
 
 
 private:
 
 	QSqlDatabase mainConnection;
+	QList<QPair<QString, QString>> idMiddleSerialFinal;
+	QList<QPair<QString, QPair<QString, QString>>> finalArrIdAndValueFinal;
 };
 
