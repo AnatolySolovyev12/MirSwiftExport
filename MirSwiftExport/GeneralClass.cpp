@@ -331,7 +331,7 @@ void GeneralClass::getIdFromIdValues(QList<QPair<QString, QString>>tempArr)
 			}
 			else
 			{
-				finalArrIdAndValue.push_back("123", qMakePair(queryMain.value(1).toString(), queryMain.value(2).toString()));
+				finalArrIdAndValue.push_back(qMakePair("123", qMakePair(queryMain.value(1).toString(), queryMain.value(2).toString())));
 			}
 
 		}
