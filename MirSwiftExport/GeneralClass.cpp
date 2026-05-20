@@ -8,12 +8,15 @@ GeneralClass::GeneralClass(QObject *parent)
 		getAllDevice();
 		getAllValueForEnergy();
 
-		for (int counter = 0; counter < idMiddleSerialFinal.length(); counter++)
+
+		for (int counter = 0, counterValue = 0; counter < idMiddleSerialFinal.length(); ++counter, ++counterValue)
 		{
-			qDebug() << "Final cmd exit";
-			qDebug() << idMiddleSerialFinal[counter].first << "   " << idMiddleSerialFinal[counter].second << "   " << finalArrIdAndValueFinal[counter].first 
-				<< "   " << finalArrIdAndValueFinal[counter].second.first << "   " << finalArrIdAndValueFinal[counter].second.second
-				<< "   " << finalArrIdAndValueFinal[1+ counter*2].second.first << "   " << finalArrIdAndValueFinal[1+counter*2].second.second;
+			QString temp;
+			temp += idMiddleSerialFinal[counter].second + "   " + finalArrIdAndValueFinal[counterValue].second.second;
+			++counterValue;
+			temp +=  "   " + finalArrIdAndValueFinal[counterValue].second.second;
+			qDebug() << temp;
+
 		}
 
 	}
@@ -30,7 +33,7 @@ GeneralClass::~GeneralClass()
 bool GeneralClass::connectToDb()
 {
 	QFile tempForCheckDb;
-	tempForCheckDb.setFileName("C://Users//admin//source//repos//TEST_копия1.db"); // рихтануть метод в плане указания базы
+	tempForCheckDb.setFileName("C://Users//admin//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
 
 	if (!tempForCheckDb.exists())
 	{
@@ -41,7 +44,7 @@ bool GeneralClass::connectToDb()
 
 
 	mainConnection = QSqlDatabase::addDatabase("QSQLITE", "mirSwiftDb");
-	mainConnection.setDatabaseName("C://Users//admin//source//repos//TEST_копия1.db");
+	mainConnection.setDatabaseName("C://Users//admin//source//repos//AddressSpaceFULL.db");
 
 	if (!mainConnection.open())
 	{
