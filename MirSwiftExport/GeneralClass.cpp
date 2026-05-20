@@ -331,7 +331,7 @@ void GeneralClass::getIdFromIdValues(QList<QPair<QString, QString>>tempArr)
 			}
 			else
 			{
-				idMiddleSerial.push_back(qMakePair(queryMain.value(1).toString(), queryMain.value(2).toString()));
+				finalArrIdAndValue.push_back("123", qMakePair(queryMain.value(1).toString(), queryMain.value(2).toString()));
 			}
 
 		}
@@ -340,7 +340,7 @@ void GeneralClass::getIdFromIdValues(QList<QPair<QString, QString>>tempArr)
 	// выводим чистый массив с кем работать
 	qDebug() << "Full id serial array...";
 
-	for (auto& val : idMiddleSerial)
+	for (auto& val : finalArrIdAndValue)
 	{
 		qDebug() << val.first << "   " << val.second;
 	}
