@@ -8,25 +8,39 @@ GeneralClass::GeneralClass(QObject *parent)
 		getAllDevice();
 		getAllValueForEnergy();
 
-
 		for (int counter = 0, counterValue = 0; counter < idMiddleSerialFinal.length(); ++counter, ++counterValue)
 		{
 			QString temp;
-			temp += idMiddleSerialFinal[counter].second + "   " + finalArrIdAndValueFinal[counterValue].second.second;
+			QString dayValue = finalArrIdAndValueFinal[counterValue].second.second;
+
+			if (dayValue.length() > 3)
+				dayValue.insert(dayValue.length() - 3, ",");
+			else
+				dayValue.push_front("0,");
+
+			temp += idMiddleSerialFinal[counter].second + "   " + dayValue;
 			++counterValue;
-			temp +=  "   " + finalArrIdAndValueFinal[counterValue].second.second;
+
+			QString nightValue = finalArrIdAndValueFinal[counterValue].second.second;
+
+			if (nightValue.length() > 3)
+				nightValue.insert(nightValue.length() - 3, ",");
+			else
+				nightValue.push_front("0,");
+
+			temp +=  "   " + nightValue;
+
+			if (idMiddleSerialFinal[counter].second == "") continue;
+
 			qDebug() << temp;
-
 		}
-
 	}
-
-
 }
+
+
 
 GeneralClass::~GeneralClass()
 {}
-
 
 
 
@@ -40,8 +54,6 @@ bool GeneralClass::connectToDb()
 		qDebug() << "NOT found your dataBase";
 		return false;
 	}
-
-
 
 	mainConnection = QSqlDatabase::addDatabase("QSQLITE", "mirSwiftDb");
 	mainConnection.setDatabaseName("C://Users//admin//source//repos//AddressSpaceFULL.db");
@@ -59,7 +71,7 @@ bool GeneralClass::connectToDb()
 	}
 	else
 	{
-		qDebug() << "Db is open";
+		//qDebug() << "Db is open";
 
 		return true;
 	}
@@ -106,7 +118,6 @@ void GeneralClass::getAllDevice()
 				qDebug() << "NOT check first read in start";
 
 			return;
-			
 		}
 		else
 		{
@@ -117,7 +128,6 @@ void GeneralClass::getAllDevice()
 				idSerialList.push_back(qMakePair(queryMain.value(0).toString(), queryMain.value(1).toString()));
 			}
 		}
-
 
 		// Делаем последующие проверки на предмет того что это те записи с серийником которые нам требуется
 
@@ -149,8 +159,6 @@ void GeneralClass::getAllDevice()
 			}
 		}	
 	}
-
-
 
 
 	// выводим чистый массив с кем работать
