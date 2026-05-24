@@ -1,9 +1,9 @@
 ﻿#include "GeneralClass.h"
 
-GeneralClass::GeneralClass(QObject *parent)
+GeneralClass::GeneralClass(QObject* parent)
 	: QObject(parent)
 {
-	if(connectToDb())
+	if (connectToDb())
 	{
 		getAllDevice();
 		getAllValueForEnergy();
@@ -18,7 +18,7 @@ GeneralClass::GeneralClass(QObject *parent)
 			else
 				dayValue.push_front("0,");
 
-			temp += idMiddleSerialFinal[counter].second + "   " + dayValue;
+			temp += idMiddleSerialFinal[counter].second + " " + dayValue;
 			++counterValue;
 
 			QString nightValue = finalArrIdAndValueFinal[counterValue].second.second;
@@ -28,26 +28,45 @@ GeneralClass::GeneralClass(QObject *parent)
 			else
 				nightValue.push_front("0,");
 
-			temp +=  "   " + nightValue;
+			temp += " " + nightValue;
 
 			if (idMiddleSerialFinal[counter].second == "") continue;
 
 			qDebug() << temp;
 		}
+
+		mainConnection.close();
 	}
 }
 
 
 
 GeneralClass::~GeneralClass()
-{}
+{
+	if (mainConnection.isOpen())
+		mainConnection.close();
+}
 
 
 
 bool GeneralClass::connectToDb()
 {
 	QFile tempForCheckDb;
-	tempForCheckDb.setFileName("C://Users//admin//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
+
+	std::string dbString;
+
+	do {
+		std::cout << "Enter name of your dataBase in app directory: ";
+		std::cin >> dbString;
+
+		if (std::cin.fail() || dbString.length() < 0 || dbString.length() > 100) {
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // Очищаем буфер
+			std::cout << "Incorrect name. Try again.\n";
+		}
+	} while (std::cin.fail() || dbString.length() < 0 || dbString.length() > 100);
+
+	tempForCheckDb.setFileName(QString::fromStdString(dbString).trimmed()); // рихтануть метод в плане указания базы
 
 	if (!tempForCheckDb.exists())
 	{
@@ -56,7 +75,7 @@ bool GeneralClass::connectToDb()
 	}
 
 	mainConnection = QSqlDatabase::addDatabase("QSQLITE", "mirSwiftDb");
-	mainConnection.setDatabaseName("C://Users//admin//source//repos//AddressSpaceFULL.db");
+	mainConnection.setDatabaseName(QString::fromStdString(dbString).trimmed());
 
 	if (!mainConnection.open())
 	{
@@ -85,7 +104,7 @@ void GeneralClass::getAllDevice()
 	QSqlQuery queryCheck(mainConnection);
 
 	QString queryString = "select object_owner_id, property_value, time_stamp from properties where property_type_id = 987 and property_value != '0'";
-	
+
 	QList<QPair<QString, QString>>idSerialList;
 
 	if (!queryMain.exec(queryString) || !queryMain.next())
@@ -109,7 +128,7 @@ void GeneralClass::getAllDevice()
 
 		if (!queryCheck.exec(queryCheckString) || !queryCheck.next())
 		{
-			
+
 			if (queryCheck.lastError().isValid())
 			{
 				qDebug() << "Error in getAllData() when try to check first read. Query:\n" << queryCheck.lastQuery() << "\nError text:\n" << queryCheck.lastError().text();
@@ -131,7 +150,7 @@ void GeneralClass::getAllDevice()
 
 		// Делаем последующие проверки на предмет того что это те записи с серийником которые нам требуется
 
-		while(queryMain.next())
+		while (queryMain.next())
 		{
 			//std::cout << "Next serial in func: " << queryMain.value(0).toString().toStdString() << "   " << queryMain.value(1).toString().toStdString() << std::endl;
 
@@ -157,9 +176,8 @@ void GeneralClass::getAllDevice()
 					idSerialList.push_back(qMakePair(queryMain.value(0).toString(), queryMain.value(1).toString()));
 				}
 			}
-		}	
+		}
 	}
-
 
 	// выводим чистый массив с кем работать
 	/*qDebug() << "Full serial array...";
@@ -178,7 +196,6 @@ QList<QPair<QString, QString>> GeneralClass::getMiddleId(QList<QPair<QString, QS
 {
 	QSqlQuery queryMain(mainConnection);
 	QList<QPair<QString, QString>>idMiddleSerial;
-
 
 	for (auto& val : tempArr)
 	{
@@ -271,8 +288,6 @@ void GeneralClass::getAllValueForEnergy()
 			idAndEnergy.push_back(qMakePair(querySecond.value(0).toString(), querySecond.value(1).toString()));
 		}
 
-
-
 		while (queryMain.next())
 		{
 			QString queryString = QString("SELECT object_owner_id, property_value, time_stamp FROM properties where object_owner_id = %1").arg(queryMain.value(0).toString());
@@ -295,7 +310,7 @@ void GeneralClass::getAllValueForEnergy()
 
 		}
 	}
-	
+
 
 	// выводим чистый массив с кем работать
 	/*qDebug() << "Full value And Id  array...";
