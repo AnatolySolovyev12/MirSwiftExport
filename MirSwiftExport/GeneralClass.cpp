@@ -128,7 +128,6 @@ void GeneralClass::getAllDevice()
 
 		if (!queryCheck.exec(queryCheckString) || !queryCheck.next())
 		{
-
 			if (queryCheck.lastError().isValid())
 			{
 				qDebug() << "Error in getAllData() when try to check first read. Query:\n" << queryCheck.lastQuery() << "\nError text:\n" << queryCheck.lastError().text();
@@ -307,10 +306,8 @@ void GeneralClass::getAllValueForEnergy()
 			{
 				idAndEnergy.push_back(qMakePair(querySecond.value(0).toString(), querySecond.value(1).toString()));
 			}
-
 		}
 	}
-
 
 	// выводим чистый массив с кем работать
 	/*qDebug() << "Full value And Id  array...";
@@ -320,7 +317,6 @@ void GeneralClass::getAllValueForEnergy()
 		qDebug() << val.first << "   " << val.second;
 	}
 	*/
-
 
 	finalArrIdAndValueFinal = getIdFromIdValues(idAndEnergy);
 }
