@@ -33,7 +33,7 @@ GeneralClass::~GeneralClass()
 bool GeneralClass::connectToDb()
 {
 	QFile tempForCheckDb;
-	tempForCheckDb.setFileName("C://Users//admin//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
+	tempForCheckDb.setFileName("C://Users//PavlovAA//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
 
 	if (!tempForCheckDb.exists())
 	{
@@ -44,7 +44,7 @@ bool GeneralClass::connectToDb()
 
 
 	mainConnection = QSqlDatabase::addDatabase("QSQLITE", "mirSwiftDb");
-	mainConnection.setDatabaseName("C://Users//admin//source//repos//AddressSpaceFULL.db");
+	mainConnection.setDatabaseName("C://Users//PavlovAA//source//repos//AddressSpaceFULL.db");
 
 	if (!mainConnection.open())
 	{
