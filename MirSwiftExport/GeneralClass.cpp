@@ -52,7 +52,7 @@ GeneralClass::~GeneralClass()
 bool GeneralClass::connectToDb()
 {
 	QFile tempForCheckDb;
-	tempForCheckDb.setFileName("C://Users//admin//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
+	//tempForCheckDb.setFileName("C://Users//admin//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
 
 	std::string dbString;
 
