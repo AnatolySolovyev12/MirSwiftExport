@@ -1,6 +1,6 @@
 ﻿#include <QtCore/QCoreApplication>
 
-#include <Windows.h>
+#include <windows.h>
 #include <clocale>
 #include <GeneralClass.h>
 

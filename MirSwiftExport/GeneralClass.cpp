@@ -8,6 +8,8 @@ GeneralClass::GeneralClass(QObject* parent)
 		getAllDevice();
 		getAllValueForEnergy();
 
+
+		/*
 		for (int counter = 0, counterValue = 0; counter < idMiddleSerialFinal.length(); ++counter, ++counterValue)
 		{
 			QString temp;
@@ -34,6 +36,10 @@ GeneralClass::GeneralClass(QObject* parent)
 
 			qDebug() << temp;
 		}
+		*/
+
+		importFromXlsFunc();
+		importInConfiguration();
 
 		mainConnection.close();
 	}
@@ -45,6 +51,8 @@ GeneralClass::~GeneralClass()
 {
 	if (mainConnection.isOpen())
 		mainConnection.close();
+
+	CoUninitialize();  // Освобождение COM
 }
 
 
@@ -54,19 +62,20 @@ bool GeneralClass::connectToDb()
 	QFile tempForCheckDb;
 	//tempForCheckDb.setFileName("C://Users//admin//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
 
-	std::string dbString;
+	std::string dbString = "importBase.db";
 
+	/*
 	do {
 		std::cout << "Enter name of your dataBase in app directory: ";
 		std::cin >> dbString;
 
 		if (std::cin.fail() || dbString.length() < 0 || dbString.length() > 100) {
 			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // Очищаем буфер
+			std::cin.ignore(36501, '\n');  // Очищаем буфер
 			std::cout << "Incorrect name. Try again.\n";
 		}
 	} while (std::cin.fail() || dbString.length() < 0 || dbString.length() > 100);
-
+	*/
 	tempForCheckDb.setFileName(QString::fromStdString(dbString).trimmed()); // рихтануть метод в плане указания базы
 
 	if (!tempForCheckDb.exists())
@@ -91,8 +100,6 @@ bool GeneralClass::connectToDb()
 	}
 	else
 	{
-		//qDebug() << "Db is open";
-
 		return true;
 	}
 }
@@ -179,14 +186,6 @@ void GeneralClass::getAllDevice()
 		}
 	}
 
-	// выводим чистый массив с кем работать
-	/*qDebug() << "Full serial array...";
-
-	for (auto& val : idSerialList)
-	{
-		qDebug() << val.first << "   " << val.second;
-	}
-	*/
 	idMiddleSerialFinal = getMiddleId(idSerialList);
 }
 
@@ -231,17 +230,8 @@ QList<QPair<QString, QString>> GeneralClass::getMiddleId(QList<QPair<QString, QS
 			{
 				idMiddleSerial.push_back(qMakePair(queryMain.value(1).toString(), val.second));
 			}
-
 		}
 	}
-
-	// выводим чистый массив с кем работать
-	/*qDebug() << "Full id serial array...";
-
-	for (auto& val : idMiddleSerial)
-	{
-		qDebug() << val.first << "   " << val.second;
-	}*/
 
 	return idMiddleSerial;
 }
@@ -310,15 +300,6 @@ void GeneralClass::getAllValueForEnergy()
 		}
 	}
 
-	// выводим чистый массив с кем работать
-	/*qDebug() << "Full value And Id  array...";
-
-	for (auto& val : idAndEnergy)
-	{
-		qDebug() << val.first << "   " << val.second;
-	}
-	*/
-
 	finalArrIdAndValueFinal = getIdFromIdValues(idAndEnergy);
 }
 
@@ -371,13 +352,136 @@ QList<QPair<QString, QPair<QString, QString>>> GeneralClass::getIdFromIdValues(Q
 		}
 	}
 
-	// выводим чистый массив с кем работать
-	/*qDebug() << "Full idId array...";
-
-	for (auto& val : finalArrIdAndValue)
-	{
-		qDebug() << val.first << "   " << val.second;
-	}
-	*/
 	return finalArrIdAndValue;
+}
+
+
+
+void GeneralClass::importFromXlsFunc()
+{
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) {
+		qDebug() << "CoInitializeEx failed:" << hr;
+		return;
+	}
+
+	QString addFileDonor = QCoreApplication::applicationDirPath() + "/123.xlsx";
+
+	QFile tempForCheckFile(addFileDonor);
+
+	if (!tempForCheckFile.exists()) 
+	{
+		qDebug() << "Файл не найден:" << addFileDonor;
+		CoUninitialize();
+		return;
+	}
+
+	QString pKey, pValue;
+
+	QSharedPointer<QAxObject>excelDonor(new QAxObject("Excel.Application", 0));
+	QSharedPointer<QAxObject>workbooksDonor(excelDonor->querySubObject("Workbooks"));
+	QSharedPointer<QAxObject>workbookDonor(workbooksDonor->querySubObject("Open(const QString&)", addFileDonor));
+	QSharedPointer<QAxObject>sheetsDonor(workbookDonor->querySubObject("Worksheets"));
+
+	QSharedPointer<QAxObject>sheetDonor(sheetsDonor->querySubObject("Item(int)", 1));
+	QSharedPointer<QAxObject>usedRangeDonor(sheetDonor->querySubObject("UsedRange"));
+	QSharedPointer<QAxObject>rowsDonor(usedRangeDonor->querySubObject("Rows"));
+	int countRowsDonor = rowsDonor->property("Count").toInt();
+	QSharedPointer<QAxObject>usedRangeColDonor(sheetDonor->querySubObject("UsedRange"));
+	QSharedPointer<QAxObject>columnsDonor(usedRangeColDonor->querySubObject("Columns"));
+	int countColsDonor = columnsDonor->property("Count").toInt();
+
+	for (int row = 1; row <= countRowsDonor; ++row)
+	{
+		for (int column = 1; column <= 2; ++column)
+		{
+			QSharedPointer<QAxObject>cell(sheetDonor.data()->querySubObject("Cells(int,int)", row, column)); // так указываем с какой ячейкой работать
+			column == 1 ? pKey = cell->property("Value").toString().trimmed() : pValue = cell->property("Value").toString().trimmed();
+		}
+
+		xlsArrayForImport.push_back(qMakePair(pKey, pValue));
+	}
+
+	for (auto val : xlsArrayForImport)
+		std::cout << val.first.toStdString() << "   " << val.second.toStdString() << "\n";
+
+	workbookDonor->dynamicCall("Close()");
+	excelDonor->dynamicCall("Quit()");
+
+	CoUninitialize();
+}
+
+
+
+void GeneralClass::importInConfiguration()
+{
+	QString queryString = "SELECT object_id, object_name FROM objects where object_type_id like '1041%'";
+
+	QSqlQuery queryMain(mainConnection);
+	QSqlQuery queryChangeNameAndValue(mainConnection);
+
+	if (!queryMain.exec(queryString) || !queryMain.next())
+	{
+		if (queryMain.lastError().isValid())
+		{
+			qDebug() << "Error in importInConfiguration() when try to get all tree object. Query:\n" << queryMain.lastQuery() << "\nError text:\n" << queryMain.lastError().text();
+		}
+		else
+			qDebug() << "NOT get tree object";
+
+		return;
+	}
+	else
+	{
+		qDebug() << "\nStart";/////////////////
+
+		int counterArray = 0;
+
+		do
+		{
+			QString queryChange = QString("UPDATE objects SET object_name = '%1' WHERE object_id = '%2'")
+				.arg(xlsArrayForImport[counterArray].first)
+				.arg(queryMain.value(0).toString());
+
+			
+
+			if (!queryChangeNameAndValue.exec(queryChange))
+			{
+				if (queryChangeNameAndValue.lastError().isValid())
+				{
+					qDebug() << "Error in importInConfiguration() when try to update name of object tree. Query:\n" << queryChangeNameAndValue.lastQuery() << "\nError text:\n" << queryChangeNameAndValue.lastError().text();
+					std::cout << "\n" << xlsArrayForImport[counterArray].first.toStdString() << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
+				}
+				else
+					qDebug() << "NOT update name";
+			}
+			else
+			{
+				 queryChange = QString("UPDATE properties SET property_value = '%1' WHERE object_owner_id = '%2' AND property_type_id = '987'")
+					.arg(xlsArrayForImport[counterArray].second)
+					.arg(queryMain.value(0).toString());
+
+				 std::cout << "\n" << xlsArrayForImport[counterArray].second.toStdString() << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
+
+
+				if (!queryChangeNameAndValue.exec(queryChange))
+				{
+					if (queryChangeNameAndValue.lastError().isValid())
+					{
+						qDebug() << "Error in importInConfiguration() when try to update number of object tree. Query:\n" << queryChangeNameAndValue.lastQuery() << "\nError text:\n" << queryChangeNameAndValue.lastError().text();
+						std::cout << "\n" << xlsArrayForImport[counterArray].first.toStdString() << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
+					}
+					else
+						qDebug() << "NOT update number";
+				}
+			}
+
+			std::cout << counterArray << " is done";
+
+			++counterArray;
+
+		} while (queryMain.next());
+
+		qDebug() << "\nFINISH";//////////////////////
+	}
 }
