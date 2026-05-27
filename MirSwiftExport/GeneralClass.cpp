@@ -348,7 +348,6 @@ QList<QPair<QString, QPair<QString, QString>>> GeneralClass::getIdFromIdValues(Q
 			{
 				finalArrIdAndValue.push_back(qMakePair(queryMain.value(1).toString(), qMakePair(val.first, val.second)));
 			}
-
 		}
 	}
 
@@ -440,17 +439,15 @@ void GeneralClass::importInConfiguration()
 		do
 		{
 			QString queryChange = QString("UPDATE objects SET object_name = '%1' WHERE object_id = '%2'")
-				.arg(xlsArrayForImport[counterArray].first)
+				.arg(counterArray >= xlsArrayForImport.length() ? "empty" : xlsArrayForImport[counterArray].first)
 				.arg(queryMain.value(0).toString());
-
-			
 
 			if (!queryChangeNameAndValue.exec(queryChange))
 			{
 				if (queryChangeNameAndValue.lastError().isValid())
 				{
 					qDebug() << "Error in importInConfiguration() when try to update name of object tree. Query:\n" << queryChangeNameAndValue.lastQuery() << "\nError text:\n" << queryChangeNameAndValue.lastError().text();
-					std::cout << "\n" << xlsArrayForImport[counterArray].first.toStdString() << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
+					std::cout << "\n" << (counterArray >= xlsArrayForImport.length() ? "" : xlsArrayForImport[counterArray].first.toStdString()) << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
 				}
 				else
 					qDebug() << "NOT update name";
@@ -458,10 +455,10 @@ void GeneralClass::importInConfiguration()
 			else
 			{
 				 queryChange = QString("UPDATE properties SET property_value = '%1' WHERE object_owner_id = '%2' AND property_type_id = '987'")
-					.arg(xlsArrayForImport[counterArray].second)
-					.arg(queryMain.value(0).toString());
+					 .arg(counterArray >= xlsArrayForImport.length() ? "00000000" : xlsArrayForImport[counterArray].second)
+					 .arg(queryMain.value(0).toString());
 
-				 std::cout << "\n" << xlsArrayForImport[counterArray].second.toStdString() << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
+				 std::cout << "\n" << (counterArray >= xlsArrayForImport.length() ? "" : xlsArrayForImport[counterArray].second.toStdString()) << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
 
 
 				if (!queryChangeNameAndValue.exec(queryChange))
@@ -469,7 +466,7 @@ void GeneralClass::importInConfiguration()
 					if (queryChangeNameAndValue.lastError().isValid())
 					{
 						qDebug() << "Error in importInConfiguration() when try to update number of object tree. Query:\n" << queryChangeNameAndValue.lastQuery() << "\nError text:\n" << queryChangeNameAndValue.lastError().text();
-						std::cout << "\n" << xlsArrayForImport[counterArray].first.toStdString() << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
+						std::cout << "\n" << (counterArray >= xlsArrayForImport.length() ? "" : xlsArrayForImport[counterArray].first.toStdString()) << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
 					}
 					else
 						qDebug() << "NOT update number";
