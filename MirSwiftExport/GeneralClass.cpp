@@ -8,38 +8,34 @@ GeneralClass::GeneralClass(QObject* parent)
 		getAllDevice();
 		getAllValueForEnergy();
 
+		std::string dbString;
 
-		/*
-		for (int counter = 0, counterValue = 0; counter < idMiddleSerialFinal.length(); ++counter, ++counterValue)
+		do {
+			std::cout << "Read current values from db? (R/r) OR write adress/serial in current object in db? (W/w)";
+			std::cin >> dbString;
+
+			if (std::cin.fail() || dbString.length() != 1)
+			{
+				std::cin.clear();
+				std::cin.ignore(36501, '\n');  // Очищаем буфер
+				std::cout << "Incorrect. Try again.\n";
+				continue;
+			}
+
+			if (dbString == "R" || dbString == "r" || dbString == "W" || dbString == "w") break;
+			else std::cout << "Incorrect. Try again.\n";
+
+		} while (true);
+
+		if (dbString == "R" || dbString == "r")
 		{
-			QString temp;
-			QString dayValue = finalArrIdAndValueFinal[counterValue].second.second;
-
-			if (dayValue.length() > 3)
-				dayValue.insert(dayValue.length() - 3, ",");
-			else
-				dayValue.push_front("0,");
-
-			temp += idMiddleSerialFinal[counter].second + " " + dayValue;
-			++counterValue;
-
-			QString nightValue = finalArrIdAndValueFinal[counterValue].second.second;
-
-			if (nightValue.length() > 3)
-				nightValue.insert(nightValue.length() - 3, ",");
-			else
-				nightValue.push_front("0,");
-
-			temp += " " + nightValue;
-
-			if (idMiddleSerialFinal[counter].second == "") continue;
-
-			qDebug() << temp;
+			readFromDb();
 		}
-		*/
-
-		importFromXlsFunc();
-		importInConfiguration();
+		else
+		{
+			if (importFromXlsFunc())
+				importInConfiguration();
+		}
 
 		mainConnection.close();
 	}
@@ -60,11 +56,11 @@ GeneralClass::~GeneralClass()
 bool GeneralClass::connectToDb()
 {
 	QFile tempForCheckDb;
-	//tempForCheckDb.setFileName("C://Users//admin//source//repos//AddressSpaceFULL.db"); // рихтануть метод в плане указания базы
 
-	std::string dbString = "importBase.db";
+	std::string dbString;
 
-	/*
+	// Указываем и валидируем имя БД с которой будем работать
+
 	do {
 		std::cout << "Enter name of your dataBase in app directory: ";
 		std::cin >> dbString;
@@ -75,8 +71,12 @@ bool GeneralClass::connectToDb()
 			std::cout << "Incorrect name. Try again.\n";
 		}
 	} while (std::cin.fail() || dbString.length() < 0 || dbString.length() > 100);
-	*/
-	tempForCheckDb.setFileName(QString::fromStdString(dbString).trimmed()); // рихтануть метод в плане указания базы
+
+	dbString = QCoreApplication::applicationDirPath().toStdString() + "/" + dbString;
+
+	tempForCheckDb.setFileName(QString::fromStdString(dbString).trimmed());
+
+	// Проверяем существует ли файл БД перед открытием и в дальнейшем открываем
 
 	if (!tempForCheckDb.exists())
 	{
@@ -91,10 +91,10 @@ bool GeneralClass::connectToDb()
 	{
 		if (mainConnection.lastError().isValid())
 		{
-			qDebug() << "Error in connectToDb::connectToDb() when try to create/open nameDb. Error:\n" << mainConnection.lastError().text();
+			qDebug() << "Error in connectToDb::connectToDb() when try to create/open " + QString::fromStdString(dbString) + ". Error:\n" << mainConnection.lastError().text();
 		}
 		else
-			qDebug() << "NOT OPEN nameDb";
+			qDebug() << "NOT OPEN " + QString::fromStdString(dbString);
 
 		return false;
 	}
@@ -111,7 +111,7 @@ void GeneralClass::getAllDevice()
 	QSqlQuery queryMain(mainConnection);
 	QSqlQuery queryCheck(mainConnection);
 
-	QString queryString = "select object_owner_id, property_value, time_stamp from properties where property_type_id = 987 and property_value != '0'";
+	QString queryString = "select object_owner_id, property_value, time_stamp from properties where property_type_id = 987 and property_value != '0' and property_value != ''";
 
 	QList<QPair<QString, QString>>idSerialList;
 
@@ -311,7 +311,6 @@ QList<QPair<QString, QPair<QString, QString>>> GeneralClass::getIdFromIdValues(Q
 
 	QList<QPair<QString, QPair<QString, QString>>>finalArrIdAndValue;
 
-
 	for (auto& val : tempArr)
 	{
 		QString queryString = QString("SELECT link_id, object_from_id, object_to_id FROM links where object_to_id = %1").arg(val.first);
@@ -356,30 +355,53 @@ QList<QPair<QString, QPair<QString, QString>>> GeneralClass::getIdFromIdValues(Q
 
 
 
-void GeneralClass::importFromXlsFunc()
+bool GeneralClass::importFromXlsFunc() // выгрузка списка из Excel файла в массив для последующего импорта из массива в SQLite БД конфигуратора
 {
-	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) {
-		qDebug() << "CoInitializeEx failed:" << hr;
-		return;
+	QFile tempForCheckDb;
+
+	std::string xlsString;
+
+	// Указываем и валидируем имя Excel с которой будем работать
+
+	do {
+		std::cout << "Enter name of your Excel file in app directory: ";
+		std::cin >> xlsString;
+
+		if (std::cin.fail() || xlsString.length() < 0 || xlsString.length() > 100) {
+			std::cin.clear();
+			std::cin.ignore(36501, '\n');  // Очищаем буфер
+			std::cout << "Incorrect name. Try again.\n";
+		}
+	} while (std::cin.fail() || xlsString.length() < 0 || xlsString.length() > 100);
+
+	xlsString = QCoreApplication::applicationDirPath().toStdString() + "/" + xlsString;
+
+	tempForCheckDb.setFileName(QString::fromStdString(xlsString).trimmed());
+
+	// Проверяем существует ли файл Excel перед открытием и в дальнейшем открываем
+
+	if (!tempForCheckDb.exists())
+	{
+		qDebug() << "Файл не найден:" << QString::fromStdString(xlsString);
+		CoUninitialize();
+		return false;
 	}
 
-	QString addFileDonor = QCoreApplication::applicationDirPath() + "/123.xlsx";
+	// Инициализируем СОМ для последующей работы с Excel
 
-	QFile tempForCheckFile(addFileDonor);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
-	if (!tempForCheckFile.exists()) 
+	if (FAILED(hr) && hr != RPC_E_CHANGED_MODE)
 	{
-		qDebug() << "Файл не найден:" << addFileDonor;
-		CoUninitialize();
-		return;
+		qDebug() << "CoInitializeEx failed:" << hr;
+		return false;
 	}
 
 	QString pKey, pValue;
 
 	QSharedPointer<QAxObject>excelDonor(new QAxObject("Excel.Application", 0));
 	QSharedPointer<QAxObject>workbooksDonor(excelDonor->querySubObject("Workbooks"));
-	QSharedPointer<QAxObject>workbookDonor(workbooksDonor->querySubObject("Open(const QString&)", addFileDonor));
+	QSharedPointer<QAxObject>workbookDonor(workbooksDonor->querySubObject("Open(const QString&)", QString::fromStdString(xlsString)));
 	QSharedPointer<QAxObject>sheetsDonor(workbookDonor->querySubObject("Worksheets"));
 
 	QSharedPointer<QAxObject>sheetDonor(sheetsDonor->querySubObject("Item(int)", 1));
@@ -389,6 +411,8 @@ void GeneralClass::importFromXlsFunc()
 	QSharedPointer<QAxObject>usedRangeColDonor(sheetDonor->querySubObject("UsedRange"));
 	QSharedPointer<QAxObject>columnsDonor(usedRangeColDonor->querySubObject("Columns"));
 	int countColsDonor = columnsDonor->property("Count").toInt();
+
+	qDebug() << "\nSTART READ EXCEL\n";
 
 	for (int row = 1; row <= countRowsDonor; ++row)
 	{
@@ -404,10 +428,14 @@ void GeneralClass::importFromXlsFunc()
 	for (auto val : xlsArrayForImport)
 		std::cout << val.first.toStdString() << "   " << val.second.toStdString() << "\n";
 
+	qDebug() << "\nEND READ EXCEL";
+
 	workbookDonor->dynamicCall("Close()");
 	excelDonor->dynamicCall("Quit()");
 
 	CoUninitialize();
+
+	return true;
 }
 
 
@@ -432,7 +460,7 @@ void GeneralClass::importInConfiguration()
 	}
 	else
 	{
-		qDebug() << "\nStart";/////////////////
+		qDebug() << "\nSTART IMPORT";
 
 		int counterArray = 0;
 
@@ -454,12 +482,11 @@ void GeneralClass::importInConfiguration()
 			}
 			else
 			{
-				 queryChange = QString("UPDATE properties SET property_value = '%1' WHERE object_owner_id = '%2' AND property_type_id = '987'")
-					 .arg(counterArray >= xlsArrayForImport.length() ? "00000000" : xlsArrayForImport[counterArray].second)
-					 .arg(queryMain.value(0).toString());
+				queryChange = QString("UPDATE properties SET property_value = '%1' WHERE object_owner_id = '%2' AND property_type_id = '987'")
+					.arg(counterArray >= xlsArrayForImport.length() ? "00000000" : xlsArrayForImport[counterArray].second)
+					.arg(queryMain.value(0).toString());
 
-				 std::cout << "\n" << (counterArray >= xlsArrayForImport.length() ? "" : xlsArrayForImport[counterArray].second.toStdString()) << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
-
+				//std::cout << "\n" << (counterArray >= xlsArrayForImport.length() ? "" : xlsArrayForImport[counterArray].second.toStdString()) << "  " << queryMain.value(0).toString().toStdString() << "\n" << queryChange.toStdString();
 
 				if (!queryChangeNameAndValue.exec(queryChange))
 				{
@@ -471,14 +498,50 @@ void GeneralClass::importInConfiguration()
 					else
 						qDebug() << "NOT update number";
 				}
+				else
+					std::cout << "\n" << counterArray << (counterArray >= xlsArrayForImport.length() ? " is pass" : " is import");
 			}
-
-			std::cout << counterArray << " is done";
 
 			++counterArray;
 
 		} while (queryMain.next());
 
-		qDebug() << "\nFINISH";//////////////////////
+		qDebug() << "\nEND IMPORT";
 	}
+}
+
+
+
+void GeneralClass::readFromDb()
+{
+	qDebug() << "\nSTART READ\n";
+
+	for (int counter = 0, counterValue = 0; counter < idMiddleSerialFinal.length(); ++counter, ++counterValue)
+	{
+		QString temp;
+		QString dayValue = finalArrIdAndValueFinal[counterValue].second.second;
+
+		if (dayValue.length() > 3)
+			dayValue.insert(dayValue.length() - 3, ",");
+		else
+			dayValue.push_front("0,");
+
+		temp += idMiddleSerialFinal[counter].second + " " + dayValue;
+		++counterValue;
+
+		QString nightValue = finalArrIdAndValueFinal[counterValue].second.second;
+
+		if (nightValue.length() > 3)
+			nightValue.insert(nightValue.length() - 3, ",");
+		else
+			nightValue.push_front("0,");
+
+		temp += " " + nightValue;
+
+		if (idMiddleSerialFinal[counter].second == "") continue;
+
+		qDebug() << temp;
+	}
+
+	qDebug() << "\nEND READ";
 }

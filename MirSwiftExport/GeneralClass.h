@@ -29,8 +29,9 @@ public:
 	QList<QPair<QString, QString>> getMiddleId(QList<QPair<QString, QString>>tempArr);
 	void getAllValueForEnergy();
 	QList<QPair<QString, QPair<QString, QString>>> getIdFromIdValues(QList<QPair<QString, QString>>tempArr);
-	void importFromXlsFunc();
+	bool importFromXlsFunc();
 	void importInConfiguration();
+	void readFromDb();
 
 
 private:
