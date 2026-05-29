@@ -1,10 +1,7 @@
 ﻿#include <QtCore/QCoreApplication>
-
 #include <windows.h>
 #include <clocale>
 #include <GeneralClass.h>
-
-
 
 int main(int argc, char *argv[])
 {
@@ -15,7 +12,6 @@ int main(int argc, char *argv[])
     setlocale(LC_ALL, "ru_RU.UTF-8");
     
     GeneralClass myGenClass;
-
 
     return app.exec();
 }
