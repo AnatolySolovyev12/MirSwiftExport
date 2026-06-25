@@ -518,6 +518,8 @@ void GeneralClass::readFromDb()
 
 	for (int counter = 0, counterValue = 0; counter < idMiddleSerialFinal.length(); ++counter, ++counterValue)
 	{
+		while (finalArrIdAndValueFinal[counterValue].second.second == "0") counterValue++; // пропускаем 0-ые значения чтобы не было смещения показаний на другие счётчики т.к. не считанные приборы игнорировались ранее.
+
 		QString temp;
 		QString dayValue = finalArrIdAndValueFinal[counterValue].second.second;
 
@@ -525,6 +527,10 @@ void GeneralClass::readFromDb()
 			dayValue.insert(dayValue.length() - 3, ",");
 		else
 			dayValue.push_front("0,");
+
+		if (dayValue == "0,") counter++; // пропускаем приборы типа М2М чтобы не создавать дублирующих записей рядом стоящего счётчика
+
+		if (idMiddleSerialFinal[counter].first != finalArrIdAndValueFinal[counterValue].first) counter++; // избавляемся от приборов без показаний которые случайно попали в список и создающие смещение
 
 		temp += idMiddleSerialFinal[counter].second + " " + dayValue;
 		++counterValue;
