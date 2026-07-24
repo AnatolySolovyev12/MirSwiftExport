@@ -530,9 +530,45 @@ void GeneralClass::readFromDb()
 
 		if (dayValue == "0,") counter++; // пропускаем приборы типа М2М чтобы не создавать дублирующих записей рядом стоящего счётчика
 
-		if (idMiddleSerialFinal[counter].first != finalArrIdAndValueFinal[counterValue].first) counter++; // избавляемся от приборов без показаний которые случайно попали в список и создающие смещение
+		int tempCounterValue = counterValue;
+		bool breakBool = false;
 
-		temp += idMiddleSerialFinal[counter].second + " " + dayValue;
+		while (idMiddleSerialFinal[counter].first != finalArrIdAndValueFinal[counterValue].first) // прокручиваем до совпадения id 
+		{
+			counterValue++; // избавляемся от приборов без показаний которые случайно попали в список и создающие смещение
+
+			if (counterValue >= finalArrIdAndValueFinal.length())
+			{
+				counterValue = ++tempCounterValue;
+				breakBool = true;
+				break;
+			}
+			
+			//qDebug() << "log test: " + QString::number(idMiddleSerialFinal.length()) + "/" + QString::number(counter) + "   " + QString::number(finalArrIdAndValueFinal.length()) + "/" + QString::number(counterValue);
+		}
+
+		if (breakBool)
+		{
+			//qDebug() << "Continue";
+			continue;
+		}
+
+
+
+
+		if (counter >= idMiddleSerialFinal.length())
+		{
+			qDebug() << "counter - is more than idMiddleSerialFinal length";
+			break;
+		}
+
+		if(counterValue >= finalArrIdAndValueFinal.length())
+		{
+			qDebug() << "counterValue - is more than finalArrIdAndValueFinal length";
+			break;
+		}
+
+		temp += idMiddleSerialFinal[counter].first + " " + finalArrIdAndValueFinal[counterValue].first + " " + idMiddleSerialFinal[counter].second + " " + dayValue; ////////// дополнительно выводим ID
 		++counterValue;
 
 		QString nightValue = finalArrIdAndValueFinal[counterValue].second.second;
