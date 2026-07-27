@@ -556,7 +556,7 @@ void GeneralClass::readFromDb()
 
 					temp.clear();
 
-					break;
+					break; // завершаем цикл поиска показаний и переходим к новому счётчику
 				}
 			}
 
