@@ -516,73 +516,52 @@ void GeneralClass::readFromDb()
 {
 	qDebug() << "\nSTART READ\n";
 
-	for (int counter = 0, counterValue = 0; counter < idMiddleSerialFinal.length(); ++counter, ++counterValue)
+	int counter = 0, counterValue = 0;
+	bool catchBool = false;
+	QString temp;
+
+	for (auto& tempValCounters : idMiddleSerialFinal)
 	{
-		while (finalArrIdAndValueFinal[counterValue].second.second == "0") counterValue++; // пропускаем 0-ые значения чтобы не было смещения показаний на другие счётчики т.к. не считанные приборы игнорировались ранее.
-
-		QString temp;
-		QString dayValue = finalArrIdAndValueFinal[counterValue].second.second;
-
-		if (dayValue.length() > 3)
-			dayValue.insert(dayValue.length() - 3, ",");
-		else
-			dayValue.push_front("0,");
-
-		if (dayValue == "0,") counter++; // пропускаем приборы типа М2М чтобы не создавать дублирующих записей рядом стоящего счётчика
-
-		int tempCounterValue = counterValue;
-		bool breakBool = false;
-
-		while (idMiddleSerialFinal[counter].first != finalArrIdAndValueFinal[counterValue].first) // прокручиваем до совпадения id 
+		while (true)
 		{
-			counterValue++; // избавляемся от приборов без показаний которые случайно попали в список и создающие смещение
-
-			if (counterValue >= finalArrIdAndValueFinal.length())
+			if (tempValCounters.first == finalArrIdAndValueFinal[counterValue].first) // ищем совпадения ID счётчика и ID показаний до конца массива с показаниями
 			{
-				counterValue = ++tempCounterValue;
-				breakBool = true;
-				break;
+				if (!catchBool) // если нашли и первичного совпадения не было (catchBool) то фиксируем первый тариф и значит следующее значение будет вторым тарифом.
+				{
+					QString dayValue = finalArrIdAndValueFinal[counterValue].second.second;
+
+					if (dayValue.length() > 3)
+						dayValue.insert(dayValue.length() - 3, ",");
+					else
+						dayValue.push_front("0,");
+
+					catchBool = true;
+
+					temp += tempValCounters.first + " " + finalArrIdAndValueFinal[counterValue].first + " " + tempValCounters.second + " " + dayValue; ////////// дополнительно выводим ID
+				}
+				else
+				{
+					QString nightValue = finalArrIdAndValueFinal[counterValue].second.second;
+
+					if (nightValue.length() > 3)
+						nightValue.insert(nightValue.length() - 3, ",");
+					else
+						nightValue.push_front("0,");
+
+					catchBool = false;
+
+					temp += " " + nightValue;
+
+					qDebug() << temp;
+
+					temp.clear();
+
+					break;
+				}
 			}
-			
-			//qDebug() << "log test: " + QString::number(idMiddleSerialFinal.length()) + "/" + QString::number(counter) + "   " + QString::number(finalArrIdAndValueFinal.length()) + "/" + QString::number(counterValue);
+
+			++counterValue; // смещаемся в массиве показаний
 		}
-
-		if (breakBool)
-		{
-			//qDebug() << "Continue";
-			continue;
-		}
-
-
-
-
-		if (counter >= idMiddleSerialFinal.length())
-		{
-			qDebug() << "counter - is more than idMiddleSerialFinal length";
-			break;
-		}
-
-		if(counterValue >= finalArrIdAndValueFinal.length())
-		{
-			qDebug() << "counterValue - is more than finalArrIdAndValueFinal length";
-			break;
-		}
-
-		temp += idMiddleSerialFinal[counter].first + " " + finalArrIdAndValueFinal[counterValue].first + " " + idMiddleSerialFinal[counter].second + " " + dayValue; ////////// дополнительно выводим ID
-		++counterValue;
-
-		QString nightValue = finalArrIdAndValueFinal[counterValue].second.second;
-
-		if (nightValue.length() > 3)
-			nightValue.insert(nightValue.length() - 3, ",");
-		else
-			nightValue.push_front("0,");
-
-		temp += " " + nightValue;
-
-		if (idMiddleSerialFinal[counter].second == "") continue;
-
-		qDebug() << temp;
 	}
 
 	qDebug() << "\nEND READ";
