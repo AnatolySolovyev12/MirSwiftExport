@@ -537,7 +537,7 @@ void GeneralClass::readFromDb()
 
 					catchBool = true;
 
-					temp += tempValCounters.first + " " + finalArrIdAndValueFinal[counterValue].first + " " + tempValCounters.second + " " + dayValue; ////////// дополнительно выводим ID
+					temp += tempValCounters.first + " " + finalArrIdAndValueFinal[counterValue].first + " " + tempValCounters.second + " " + dayValue;
 				}
 				else
 				{
